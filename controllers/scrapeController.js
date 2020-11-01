@@ -3,7 +3,7 @@ const Nexmo = require('nexmo');
 const dotenv = require('dotenv');
 
 //import environmental variables from our variables.env file
-dotenv.config({path: '../variables.env'});
+dotenv.config();
 
 // Init Nexmo
 const nexmo = new Nexmo({
@@ -13,11 +13,15 @@ const nexmo = new Nexmo({
 
 exports.checkStock = async (req, res, next) => {
     const availability = await scrapeAccount();
-    if(availability){
-      sendSms('your Boks are available! Bok Boyz <3');
+    
+    if(availability.length){
+      const numberOfPairs = availability[0]['availability'];
+      const size = availability[0]['size'];
+      sendSms(`your Boks are available in size ${size}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
     }else{
       sendSms('no Boks are available! Bok Boyz </3');
     }
+
     res.json({availability});
 }
 
@@ -27,7 +31,7 @@ scrapeAccount = async (req, res) => {
 
     const conditions = {
         availability_status: 'IN_STOCK',
-        size: '6.5'
+        size: '9'
     };
 
     const results = boks.filter(shoe =>{
@@ -50,10 +54,8 @@ const fetchData = async (endpoint) => {
 
 const sendSms = (msg) => {
     
-    const number = process.env.PHONE_NUM;
-
     nexmo.message.sendSms(
-      process.env.TEMP_PHONE_NUM, number, msg, { type: 'unicode' },
+      process.env.TEMP_PHONE_NUM, process.env.PHONE_NUM, msg, { type: 'unicode' },
         (err, responseData) => {
           if(err) {
             console.log(err);
