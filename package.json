@@ -1,0 +1,19 @@
+{
+  "name": "watch-the-kicks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./start.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "dotenv": "^8.2.0",
+    "express": "4.15.2",
+    "nexmo": "^2.9.1",
+    "node-cron": "^2.0.3"
+  }
+}
