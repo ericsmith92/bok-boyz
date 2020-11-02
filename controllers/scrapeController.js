@@ -12,12 +12,22 @@ const nexmo = new Nexmo({
 }, { debug: true });
 
 exports.checkStock = async (req, res, next) => {
-    const availability = await scrapeAccount();
     
+    const availability = await scrapeAccount();
+    let numberOfPairs = 0;
+    const size = [];
+
     if(availability.length){
-      const numberOfPairs = availability[0]['availability'];
-      const size = availability[0]['size'];
-      sendSms(`your Boks are available in size ${size}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
+      if(availability.length >= 2){
+        availability.forEach(shoe => {
+          size.push(shoe.size);
+          numberOfPairs += parseInt(shoe.availability);
+        });
+        sendSms(`your Boks are available in sizes ${size.join(',')}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
+      }else{
+        numberOfPairs = availability[0]['availability'];
+        sendSms(`your Boks are available in size ${availability[0]['size']}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
+      }
     }else{
       sendSms('no Boks are available! Bok Boyz </3');
     }
@@ -30,19 +40,28 @@ scrapeAccount = async (req, res) => {
     const boks = await fetchData(endpoint);
 
     const conditions = {
-        availability_status: 'IN_STOCK',
-        size: '9'
-    };
+      availability_status: 'IN_STOCK',
+      size: ['8', '8.5', '9']
+  };
+  
+  /*
+  remember below we look through ALL keys in conditions, so they can pass the sizing condition
+  but fail to match the 'availability_status' condtion, in the end we still are only left
+  with items in the array that were in the size array on conditions object AND are available
+  */
 
-    const results = boks.filter(shoe =>{
-        for (let key in conditions) {
-            if (shoe[key] === undefined || shoe[key] != conditions[key])
+  const results = boks.filter(shoe =>{
+      for (let key in conditions) {
+          if(key === 'size' && conditions[key].includes(shoe[key])){
+              return true;
+          }else if (shoe[key] === undefined || shoe[key] != conditions[key]) {
               return false;
-            }
-            return true;
-    });
+          }
+      }
+      return true;
+  });
 
-    return results;
+  return results;
 }
 
 const fetchData = async (endpoint) => {
