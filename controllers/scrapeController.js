@@ -18,6 +18,7 @@ exports.checkStock = async (req, res, next) => {
           numberOfPairs += parseInt(shoe.availability);
         });
         //TODO: send URL in plain text?
+        //TODO: distinguish between black and white pairs
         sendSms(`your Boks are available in sizes ${sizes.join(',')}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
       }else{
         numberOfPairs = availability[0]['availability'];
