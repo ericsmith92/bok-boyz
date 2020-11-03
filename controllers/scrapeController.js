@@ -36,26 +36,22 @@ exports.checkStock = async (req, res, next) => {
 }
 
 scrapeAccount = async (req, res) => {
-    //black pair
-    //https://www.reebok.ca/api/products/tf/67107/availability?sitePath=en
-    //const endpoint = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
     const blackPair = 'https://www.reebok.ca/api/products/tf/67107/availability?sitePath=en';
     const whitePair = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
     const endpoints = [blackPair, whitePair];
 
-    //const boks = await fetchData(endpoint);
-    Promise.all(endpoints.map(endpoint => { 
+    const boks = await Promise.all(endpoints.map(endpoint => { 
       return fetchData(endpoint);
     }))
     .then(data => {
-      const boks = data[0].concat(data[1]);
+      const allShoeData = data[0].concat(data[1]);
    
       const conditions = {
         availability_status: 'IN_STOCK',
         size: ['7', '8', '8.5', '9']
       };
 
-      const results = boks.filter(shoe =>{
+      const results = allShoeData.filter(shoe =>{
         for (let key in conditions) {
             if(key === 'size' && conditions[key].includes(shoe[key])){
                 return true;
@@ -66,14 +62,13 @@ scrapeAccount = async (req, res) => {
         return true;
       });
 
-      //TODO: how do I get my results out of here?!?!
-      console.log(results);
+      return results;
     })
-    .catch(e => {console.log(e)});
+    .catch(e => console.log(e));
     
     
-
-    return;
+    console.log(boks);
+    return boks;
 }
 
 const fetchData = async (endpoint) => {
