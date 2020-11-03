@@ -5,25 +5,19 @@ const dotenv = require('dotenv');
 //import environmental variables from our variables.env file
 dotenv.config();
 
-// Init Nexmo
-const nexmo = new Nexmo({
-  apiKey: process.env.API_KEY,
-  apiSecret: process.env.API_SECRET
-}, { debug: true });
-
 exports.checkStock = async (req, res, next) => {
     
-    const availability = await scrapeAccount();
+    const availability = await getBoks();
     let numberOfPairs = 0;
-    const size = [];
+    const sizes = [];
 
     if(availability.length){
       if(availability.length >= 2){
         availability.forEach(shoe => {
-          size.push(shoe.size);
+          sizes.push(shoe.size);
           numberOfPairs += parseInt(shoe.availability);
         });
-        sendSms(`your Boks are available in sizes ${size.join(',')}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
+        sendSms(`your Boks are available in sizes ${sizes.join(',')}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
       }else{
         numberOfPairs = availability[0]['availability'];
         sendSms(`your Boks are available in size ${availability[0]['size']}, they have ${numberOfPairs} pairs in stock! Bok Boyz <3`);
@@ -35,7 +29,7 @@ exports.checkStock = async (req, res, next) => {
     res.json({availability});
 }
 
-scrapeAccount = async (req, res) => {
+getBoks = async (req, res) => {
     const blackPair = 'https://www.reebok.ca/api/products/tf/67107/availability?sitePath=en';
     const whitePair = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
     const endpoints = [blackPair, whitePair];
@@ -48,7 +42,7 @@ scrapeAccount = async (req, res) => {
    
       const conditions = {
         availability_status: 'IN_STOCK',
-        size: ['7', '8', '8.5', '9']
+        size: ['6.5', '7', '8', '8.5', '9']
       };
 
       const results = allShoeData.filter(shoe =>{
@@ -66,8 +60,6 @@ scrapeAccount = async (req, res) => {
     })
     .catch(e => console.log(e));
     
-    
-    console.log(boks);
     return boks;
 }
 
@@ -79,8 +71,17 @@ const fetchData = async (endpoint) => {
 
 const sendSms = (msg) => {
     
+    //init Nexmo
+    const nexmo = new Nexmo({
+      apiKey: process.env.API_KEY,
+      apiSecret: process.env.API_SECRET
+    }, { debug: true });
+
+    const sendTelNum = process.env.SEND_PHONE_NUM;
+    const toTelNum = process.env.PHONE_NUM;
+    
     nexmo.message.sendSms(
-      process.env.TEMP_PHONE_NUM, process.env.PHONE_NUM, msg, { type: 'unicode' },
+      sendTelNum, toTelNum, msg, { type: 'unicode' },
         (err, responseData) => {
           if(err) {
             console.log(err);
