@@ -36,38 +36,49 @@ exports.checkStock = async (req, res, next) => {
 }
 
 scrapeAccount = async (req, res) => {
-    const endpoint = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
-    const boks = await fetchData(endpoint);
+    //black pair
+    //https://www.reebok.ca/api/products/tf/67107/availability?sitePath=en
+    //const endpoint = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
+    const blackPair = 'https://www.reebok.ca/api/products/tf/67107/availability?sitePath=en';
+    const whitePair = 'https://www.reebok.ca/api/products/tf/63978/availability?sitePath=en';
+    const endpoints = [blackPair, whitePair];
 
-    const conditions = {
-      availability_status: 'IN_STOCK',
-      size: ['8', '8.5', '9']
-  };
-  
-  /*
-  remember below we look through ALL keys in conditions, so they can pass the sizing condition
-  but fail to match the 'availability_status' condtion, in the end we still are only left
-  with items in the array that were in the size array on conditions object AND are available
-  */
+    //const boks = await fetchData(endpoint);
+    Promise.all(endpoints.map(endpoint => { 
+      return fetchData(endpoint);
+    }))
+    .then(data => {
+      const boks = data[0].concat(data[1]);
+   
+      const conditions = {
+        availability_status: 'IN_STOCK',
+        size: ['7', '8', '8.5', '9']
+      };
 
-  const results = boks.filter(shoe =>{
-      for (let key in conditions) {
-          if(key === 'size' && conditions[key].includes(shoe[key])){
-              return true;
-          }else if (shoe[key] === undefined || shoe[key] != conditions[key]) {
-              return false;
-          }
-      }
-      return true;
-  });
+      const results = boks.filter(shoe =>{
+        for (let key in conditions) {
+            if(key === 'size' && conditions[key].includes(shoe[key])){
+                return true;
+            }else if (shoe[key] === undefined || shoe[key] != conditions[key]) {
+                return false;
+            }
+        }
+        return true;
+      });
 
-  return results;
+      //TODO: how do I get my results out of here?!?!
+      console.log(results);
+    })
+    .catch(e => {console.log(e)});
+    
+    
+
+    return;
 }
 
 const fetchData = async (endpoint) => {
     const res = await axios.get(endpoint);
     const data = res.data.variation_list;
-
     return data;
 }
 
